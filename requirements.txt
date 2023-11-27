@@ -1,0 +1,10 @@
+pytest
+pylint
+ipdb
+jupyter
+jupyterlab
+numpy
+pandas
+matplotlib
+seaborn
+scikit-learn
