@@ -47,8 +47,11 @@ def clean_raw(df, raw_text='raw_text'):
     return df
 
 
-def split_text_into_extracts(text, max_words=250):
-#to split the text into sentences, using nltk tokenizer :
+def split_text_into_extracts(text: str, max_words=250)-> list:
+    """
+    Takes a string of text and returns a list of multiple strings(=extracts), each one with less than max_words
+    """
+    #to split the text into sentences, using nltk tokenizer :
     sentences = sent_tokenize(text)
 
     result = []
