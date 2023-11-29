@@ -11,10 +11,9 @@ def clean_text(text, rmv_num=False, rmv_punct=False, lower=False):
 
     # rmv various non-text items:
     text = text.replace('\n', ' ')
-    text = text.replace("\n\n", " ")
     text = text.replace("\\", "")
     text = text.replace("\ufeff", "")
-    text = text.replace("\t", "")
+    text = text.replace('\t', ' ')
 
     #rmv double spaces
     text = re.sub(' +', ' ',text)
@@ -38,14 +37,13 @@ def clean_text(text, rmv_num=False, rmv_punct=False, lower=False):
     if lower == True:
         text = text.lower()
 
-
     return text.strip()
 
 
 
-def clean_raw(df, raw_text='raw_text'):
+def clean_raw(df, mv_num=False, rmv_punct=False, lower=False, raw_text='raw_text'):
     #Get a df with a raw text column and create a clean text column
-    df['clean_text'] = df[raw_text].apply(clean_text)
+    df['clean_text'] = df[raw_text].apply(lambda x: clean_text(x, mv_num, rmv_punct, lower))
     return df
 
 
@@ -75,7 +73,7 @@ def split_text_into_extracts(text: str, max_words=250)-> list:
 
     return result
 
-def extract_clean_samples_from_df(df: pd.DataFrame, max_word:int=250, min_word:int=50)->pd.DataFrame :
+def create_sampled_df(df: pd.DataFrame, max_word:int=250, min_word:int=50)->pd.DataFrame :
     """
     Take a df with a 'clean_text' column
     Create a column that contains a list of extracts, each of a size up to the number given in max_word
@@ -99,6 +97,5 @@ def extract_clean_samples_from_df(df: pd.DataFrame, max_word:int=250, min_word:i
     return df[['source', 'source_label', 'normalized_label',
        'extracts']]
 
-
 if __name__ == "__main__":
-    print(clean_text('hemmp guys23...!',rmv_punct=True))
+    pass
