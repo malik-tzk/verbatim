@@ -11,9 +11,9 @@ def clean_text(text, rmv_num=False, rmv_punct=False, lower=False):
 
     # rmv various non-text items:
     text = text.replace('\n', ' ')
-    text = text.replace("\n\n", " ")
     text = text.replace("\\", "")
     text = text.replace("\ufeff", "")
+    text = text.replace('\t', ' ')
 
     #rmv double spaces
     text = re.sub(' +', ' ',text)
@@ -24,6 +24,7 @@ def clean_text(text, rmv_num=False, rmv_punct=False, lower=False):
     # rmv signature at the end:
     signature_pattern = r'\s*THE END\s*\nHope you have enjoyed the reading!\nCome back to http://english-e-reader\.net/ to find more fascinating and exciting stories!'
     text = re.sub(signature_pattern, '', text, flags=re.IGNORECASE)
+    text = text.replace('- THE END - Hope you have enjoyed the reading! Come back to http://english-e-reader.net/ to find more fascinating and exciting stories!', '')
 
     #rmv numbers (if option selected)
     if rmv_num == True:
@@ -36,14 +37,13 @@ def clean_text(text, rmv_num=False, rmv_punct=False, lower=False):
     if lower == True:
         text = text.lower()
 
-
     return text.strip()
 
 
 
-def clean_raw(df, raw_text='raw_text'):
+def clean_raw(df, rmv_num=False, rmv_punct=False, lower=False, raw_text='raw_text'):
     #Get a df with a raw text column and create a clean text column
-    df['clean_text'] = df[raw_text].apply(clean_text)
+    df['clean_text'] = df[raw_text].apply(lambda x: clean_text(x, rmv_num, rmv_punct, lower))
     return df
 
 
@@ -69,31 +69,33 @@ def split_text_into_extracts(text: str, max_words=250)-> list:
             current_sentence = sentence + " "
 
     # Add the last remaining sentence
-    result.append(current_sentence.strip())
+    result.append(str(current_sentence).strip())
 
     return result
 
-def extract_clean_samples_from_df(df: pd.DataFrame, words_by_extracts:int=250)->pd.DataFrame :
+def create_sampled_df(df: pd.DataFrame, max_word:int=250, min_word:int=50)->pd.DataFrame :
     """
     Take a df with a 'clean_text' column
-    Create a column that contains a list of extracts, each of a size up to the number given in words_by_extracts
+    Create a column that contains a list of extracts, each of a size up to the number given in max_word
     Return a df with columns : 'source','source_label','normalized_label','extracts'
     """
 
     # Create a column that contains a list of extracts
     # extract = string containing sentences which add up to a certain nb of words
-    df['extracts']= df['clean_text'].apply(split_text_into_extracts,
-                                                      args=(words_by_extracts,))
+    df['extracts']= df['clean_text'].apply(lambda x: split_text_into_extracts(x, max_word,))
+
     #Spread the list over into different rows
     df = df.explode('extracts')
 
-    #Clean data so we only get back what we want :
-    df.drop(columns = ['raw_text','clean_text','Unnamed: 0'], inplace=True)
+    #Rmv extracts out of the boundaries <= min_word >= max_word
+    df['count'] = df['extracts'].apply(lambda x: len(x.split()))
+    df = df[(df['count'] >= min_word) & (df['count'] <= max_word)]
+
+    #Clean indexes :
     df.reset_index(drop=True, inplace=True)
 
-    return df
-
-
+    return df[['source', 'source_label', 'normalized_label',
+       'extracts']]
 
 if __name__ == "__main__":
-    print(clean_text('hemmp guys23...!',rmv_punct=True))
+    pass
