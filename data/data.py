@@ -41,9 +41,9 @@ def clean_text(text, rmv_num=False, rmv_punct=False, lower=False):
 
 
 
-def clean_raw(df, mv_num=False, rmv_punct=False, lower=False, raw_text='raw_text'):
+def clean_raw(df, rmv_num=False, rmv_punct=False, lower=False, raw_text='raw_text'):
     #Get a df with a raw text column and create a clean text column
-    df['clean_text'] = df[raw_text].apply(lambda x: clean_text(x, mv_num, rmv_punct, lower))
+    df['clean_text'] = df[raw_text].apply(lambda x: clean_text(x, rmv_num, rmv_punct, lower))
     return df
 
 
@@ -69,7 +69,7 @@ def split_text_into_extracts(text: str, max_words=250)-> list:
             current_sentence = sentence + " "
 
     # Add the last remaining sentence
-    result.append(current_sentence.strip())
+    result.append(str(current_sentence).strip())
 
     return result
 
@@ -82,17 +82,17 @@ def create_sampled_df(df: pd.DataFrame, max_word:int=250, min_word:int=50)->pd.D
 
     # Create a column that contains a list of extracts
     # extract = string containing sentences which add up to a certain nb of words
-    df['extracts']= df['clean_text'].apply(split_text_into_extracts,
-                                                      args=(max_word,))
+    df['extracts']= df['clean_text'].apply(lambda x: split_text_into_extracts(x, max_word,))
+
     #Spread the list over into different rows
     df = df.explode('extracts')
 
-    #Clean data so we only get back what we want :
-    df.reset_index(drop=True, inplace=True)
-
-    #Rmv extracts <= min_word
+    #Rmv extracts out of the boundaries <= min_word >= max_word
     df['count'] = df['extracts'].apply(lambda x: len(x.split()))
-    df = df[df['count'] >= min_word]
+    df = df[(df['count'] >= min_word) & (df['count'] <= max_word)]
+
+    #Clean indexes :
+    df.reset_index(drop=True, inplace=True)
 
     return df[['source', 'source_label', 'normalized_label',
        'extracts']]
