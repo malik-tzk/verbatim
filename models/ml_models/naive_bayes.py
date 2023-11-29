@@ -4,9 +4,11 @@ from sklearn.pipeline import make_pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 
-def naive_bayes(X_train, y_train, tfidfvectorizer__ngram_range, multinomialnb__alpha):
-    ''' This function implements a non-fitted multinomial naive bayes model.
-    The parameters of the pipeline are found through a grid-search.
+def naive_bayes(X_train, y_train, tfidfvectorizer__ngram_range = ((1,1), (2,2)), multinomialnb__alpha = (0.1, 1)):
+    ''' This function implements a fitted multinomial naive bayes model.
+    The parameters of the pipeline are found through a grid-search based on inputs provided by the user:
+    - tfidfvectorizer__ngram_range is a tuple (default : ((1,1), (2,2)))
+    - multinomialnb__alpha is a float or a tuple of floats (default: (0.1, 1))
     '''
     # step 1 : building the pipepline
     pipeline = make_pipeline(
