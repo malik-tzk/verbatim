@@ -1,6 +1,7 @@
 import re
 import string
 import pandas as pd
+import numpy as np
 from nltk.tokenize import sent_tokenize
 
 def clean_text(text, rmv_num=False, rmv_punct=False, lower=False):
@@ -96,6 +97,79 @@ def create_sampled_df(df: pd.DataFrame, max_word:int=250, min_word:int=50)->pd.D
 
     return df[['source', 'source_label', 'normalized_label',
        'extracts']]
+
+def get_dfs_classes (df:pd.DataFrame, column:str='normalized_label',shuffled:bool=True)->list :
+    """
+    Gets a DataFrame and a column name
+    Returns a list of DataFrames sorted by the column class
+    Each DataFrame can be suffled if desired
+    """
+    df_list = []
+    # get all the classes in the df in the right order
+    classes = np.sort(df[column].unique())
+
+    #Create a DF for each class
+    for label in classes:
+        mask_label = df[column]==label
+        df_i = df[mask_label]
+
+        if shuffled == True : #Suffles
+            df_i = df_i.sample(frac=1).reset_index(drop=True)
+
+        df_list.append(df_i)
+
+    return df_list
+
+def create_train_test_df(list_df:list ,
+                                  sample_sizes:list)->pd.DataFrame:
+    """
+    Takes a list of Dataframe and a list of rows sizes for each DF and creates 2 DF :
+    One with the number of row selected for each class = used for training
+    One with the rest = used for testing
+    """
+
+    if len(list_df) != len(sample_sizes) :
+        return 'Error len of list of dataframes and samples sizes are not the same'
+
+    #extract the rows from each dataset
+    list_df_balanced_train = []
+    list_df_test = []
+
+    for i in range(len(list_df)) :
+
+        #Get the right df and the corresponding number of row :
+        df = list_df[i]
+        n_rows_to_extract = sample_sizes[i]
+
+        #Extract the rows for each final df :
+        df_sample = df.iloc[:n_rows_to_extract]
+        df_rest = df.iloc[n_rows_to_extract:]
+        list_df_balanced_train.append(df_sample)
+        list_df_test.append(df_rest)
+
+    #Concatenate each dataframe in the lists
+    df_train = pd.concat(list_df_balanced_train)
+    df_test = pd.concat(list_df_test)
+
+    #  Clean indexes:
+    df_train.reset_index(inplace=True, drop=True)
+    df_test.reset_index(inplace=True, drop=True)
+
+
+    return df_train, df_test
+
+def custom_train_test_df(df:pd.DataFrame, sample_sizes:list, column:str='normalized_label',suffled:bool=True):
+    """
+    from 1 df returns 2 df :
+    one customed with sample_size for each class = used for training
+    one with the rest = used for training
+    combines get_dfs_classes and create_train_test_df
+    """
+    list_df = get_dfs_classes(df,column,suffled)
+    df_train, df_test = create_train_test_df(list_df,sample_sizes)
+    return df_train, df_test
+
+
 
 if __name__ == "__main__":
     pass
