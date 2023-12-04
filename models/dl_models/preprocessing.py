@@ -7,7 +7,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 from data.data import clean_raw, create_sampled_df
 
-def preprocessing(df, min_word=160, max_word=210, rmv_num=False, lower=False, test_size=0.2):
+def preprocessing(df, min_word=160, max_word=210, rmv_num=False, lower=False, test_size=0.2, random_state=42):
 
     df_cleaned = clean_raw(df, rmv_num, lower)
     df_sampled = create_sampled_df(df_cleaned, max_word, min_word)
@@ -17,7 +17,7 @@ def preprocessing(df, min_word=160, max_word=210, rmv_num=False, lower=False, te
     y = df_sampled['normalized_label']
 
     # Train test split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
 
     # Turn X_train into a list of sequences for tokenization
     X_train= X_train['extracts'].values.tolist()
